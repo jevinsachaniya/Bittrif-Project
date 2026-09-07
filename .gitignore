@@ -1,0 +1,19 @@
+# Dependencies and generated frontend files
+node_modules/
+client/node_modules/
+client/dist/
+
+# Local environment configuration
+.env
+backend/.env
+
+# Runtime data. Render stores these on its persistent disk instead.
+*.db
+backend/data/
+backend/uploads/
+uploads/
+
+# Python cache
+__pycache__/
+backend/__pycache__/
+*.py[cod]

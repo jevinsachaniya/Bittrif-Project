@@ -9,17 +9,23 @@ import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
 
-from database import get_db, init_db
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
+from database import DATA_DIR, get_db, init_db
 from models import ImageUpload, OrderCreate, ProductCreate, StatusUpdate, UserLogin, UserRegister
 
 os.environ["PYTHONUTF8"] = "1"
 
 app = FastAPI(title="Bittrif Group API")
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
+UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+CLIENT_DIST_DIR = os.environ.get("CLIENT_DIST_DIR", os.path.join(PROJECT_ROOT, "client", "dist"))
 
 ORDER_STATUSES = {"pending", "processing", "shipped", "delivered", "cancelled"}
 DELIVERY_TYPES = {"standard", "priority"}
@@ -27,9 +33,11 @@ INVOICE_TYPES = {"gst", "standard"}
 PAYMENT_METHODS = {"cod", "proforma"}
 STANDARD_SHIPPING_AMOUNT = 0
 
+allowed_origins = [origin.strip() for origin in os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000").split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -38,6 +46,11 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     init_db()
+
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "ok"}
 
 
 def hash_pw(password):
@@ -456,3 +469,14 @@ def get_stats():
         "lowStockProducts": low_stock_products,
         "outOfStockProducts": out_of_stock_products,
     }
+
+
+if os.path.isdir(CLIENT_DIST_DIR):
+    app.mount("/assets", StaticFiles(directory=os.path.join(CLIENT_DIST_DIR, "assets")), name="frontend-assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def serve_frontend(path: str):
+        requested_file = os.path.join(CLIENT_DIST_DIR, path)
+        if path and os.path.isfile(requested_file):
+            return FileResponse(requested_file)
+        return FileResponse(os.path.join(CLIENT_DIST_DIR, "index.html"))

@@ -5,7 +5,12 @@ import json
 from html import escape
 from urllib.parse import quote
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "bittrif.db")
+BACKEND_DIR = os.path.dirname(__file__)
+DATA_DIR = os.environ.get("DATA_DIR", BACKEND_DIR)
+if not os.path.isabs(DATA_DIR):
+    DATA_DIR = os.path.abspath(os.path.join(BACKEND_DIR, DATA_DIR))
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, "bittrif.db")
 
 
 def get_db():
