@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Bittrif Shop</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">Bittrif <span>Shop</span></a>
+    <div class="nav-links">
+      <a href="index.html">← Back to Store</a>
+    </div>
+  </nav>
+
+  <div class="admin-layout">
+    <div class="sidebar">
+      <a href="#" class="active" onclick="showSection('dashboard',this)">📊 Dashboard</a>
+      <a href="#" onclick="showSection('orders',this)">📦 Orders</a>
+      <a href="#" onclick="showSection('products',this)">🛍️ Products</a>
+    </div>
+
+    <div class="admin-content">
+      <!-- DASHBOARD -->
+      <div id="section-dashboard">
+        <h2 class="section-title">Dashboard</h2>
+        <div class="stats-grid" id="statsGrid"></div>
+        <h3 style="margin-bottom:1rem">Recent Orders</h3>
+        <div id="recentOrders"></div>
+      </div>
+
+      <!-- ORDERS -->
+      <div id="section-orders" style="display:none">
+        <h2 class="section-title">All Orders</h2>
+        <div id="ordersTable"></div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div id="section-products" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+          <h2 class="section-title" style="margin:0">Products</h2>
+          <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+        </div>
+        <div id="productsTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('orderModal')">×</button>
+      <h3>Order Details</h3>
+      <div id="orderModalContent"></div>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('productModal')">×</button>
+      <h3 id="productModalTitle">Add Product</h3>
+      <form id="productForm">
+        <input type="hidden" name="id">
+        <div class="form-group"><label>Name *</label><input type="text" name="name" required></div>
+        <div class="form-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="form-group"><label>Price (₹) *</label><input type="number" name="price" required min="0"></div>
+          <div class="form-group"><label>Stock</label><input type="number" name="stock" value="100" min="0"></div>
+        </div>
+        <div class="form-group"><label>Category</label>
+          <select name="category_id" id="productCatSelect"></select>
+        </div>
+        <div class="form-group"><label>Image URL</label><input type="text" name="image" placeholder="https://..."></div>
+        <button type="submit" class="btn btn-primary btn-full">Save Product</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    function showSection(name, el) {
+      document.querySelectorAll('[id^="section-"]').forEach(s => s.style.display = 'none');
+      document.getElementById(`section-${name}`).style.display = 'block';
+      document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+      el.classList.add('active');
+      if (name === 'dashboard') loadDashboard();
+      if (name === 'orders') loadOrders();
+      if (name === 'products') loadAdminProducts();
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    const statusColors = { pending: 'badge-pending', processing: 'badge-processing', shipped: 'badge-shipped', delivered: 'badge-delivered', cancelled: 'badge-cancelled' };
+
+    async function loadDashboard() {
+      const [stats, orders] = await Promise.all([
+        fetch(`${API}/admin/stats`).then(r => r.json()),
+        fetch(`${API}/orders`).then(r => r.json())
+      ]);
+      document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="stat-value">${stats.totalOrders}</div><div class="stat-label">Total Orders</div></div>
+        <div class="stat-card"><div class="stat-value">${formatPrice(stats.totalRevenue)}</div><div class="stat-label">Total Revenue</div></div>
+        <div class="stat-card"><div class="stat-value">${stats.totalProducts}</div><div class="stat-label">Products</div></div>
+        <div class="stat-card"><div class="stat-value">${stats.pendingOrders}</div><div class="stat-label">Pending Orders</div></div>`;
+      renderOrdersTable(orders.slice(0, 5), 'recentOrders');
+    }
+
+    async function loadOrders() {
+      const orders = await fetch(`${API}/orders`).then(r => r.json());
+      renderOrdersTable(orders, 'ordersTable');
+    }
+
+    function renderOrdersTable(orders, containerId) {
+      if (!orders.length) { document.getElementById(containerId).innerHTML = '<p style="color:#94a3b8">No orders yet.</p>'; return; }
+      document.getElementById(containerId).innerHTML = `
+        <table>
+          <thead><tr><th>#ID</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+          <tbody>${orders.map(o => `
+            <tr>
+              <td>#${o.id}</td>
+              <td>${o.customer_name}<br><small style="color:#94a3b8">${o.customer_email}</small></td>
+              <td>${formatPrice(o.total)}</td>
+              <td><span class="badge ${statusColors[o.status] || ''}">${o.status}</span></td>
+              <td>${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+              <td><button class="btn btn-outline btn-sm" onclick="viewOrder(${o.id})">View</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function viewOrder(id) {
+      const order = await fetch(`${API}/orders/${id}`).then(r => r.json());
+      document.getElementById('orderModalContent').innerHTML = `
+        <p><strong>Customer:</strong> ${order.customer_name}</p>
+        <p><strong>Email:</strong> ${order.customer_email}</p>
+        <p><strong>Phone:</strong> ${order.customer_phone || '-'}</p>
+        <p><strong>Address:</strong> ${order.address}</p>
+        <p><strong>Total:</strong> ${formatPrice(order.total)}</p>
+        <p style="margin-bottom:1rem"><strong>Date:</strong> ${new Date(order.created_at).toLocaleString('en-IN')}</p>
+        <h4 style="margin-bottom:.5rem">Items:</h4>
+        <table style="margin-bottom:1rem">
+          <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>
+          <tbody>${order.items.map(i => `<tr><td>${i.product_name}</td><td>${i.quantity}</td><td>${formatPrice(i.price * i.quantity)}</td></tr>`).join('')}</tbody>
+        </table>
+        <div class="form-group">
+          <label>Update Status</label>
+          <select id="statusSelect" style="padding:.5rem;border:1.5px solid #e2e8f0;border-radius:6px;width:100%">
+            ${['pending','processing','shipped','delivered','cancelled'].map(s => `<option value="${s}" ${order.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-primary btn-full" onclick="updateStatus(${order.id})">Update Status</button>`;
+      document.getElementById('orderModal').classList.add('open');
+    }
+
+    async function updateStatus(id) {
+      const status = document.getElementById('statusSelect').value;
+      await fetch(`${API}/orders/${id}/status`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
+      closeModal('orderModal');
+      showToast('Status updated!');
+      loadOrders();
+    }
+
+    async function loadAdminProducts() {
+      const [products, cats] = await Promise.all([
+        fetch(`${API}/products`).then(r => r.json()),
+        fetch(`${API}/categories`).then(r => r.json())
+      ]);
+      const catMap = Object.fromEntries(cats.map(c => [c.id, c.name]));
+      document.getElementById('productsTable').innerHTML = `
+        <table>
+          <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th></tr></thead>
+          <tbody>${products.map(p => `
+            <tr>
+              <td><img src="${p.image}" style="width:50px;height:40px;object-fit:cover;border-radius:6px"></td>
+              <td>${p.name}</td>
+              <td>${p.category_name || '-'}</td>
+              <td>${formatPrice(p.price)}</td>
+              <td>${p.stock}</td>
+              <td style="display:flex;gap:.5rem">
+                <button class="btn btn-outline btn-sm" onclick='editProduct(${JSON.stringify(p)})'>Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id})">Delete</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function openProductModal(product = null) {
+      const cats = await fetch(`${API}/categories`).then(r => r.json());
+      document.getElementById('productCatSelect').innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      const form = document.getElementById('productForm');
+      form.reset();
+      document.getElementById('productModalTitle').textContent = product ? 'Edit Product' : 'Add Product';
+      if (product) {
+        form.name.value = product.name;
+        form.description.value = product.description || '';
+        form.price.value = product.price;
+        form.stock.value = product.stock;
+        form.category_id.value = product.category_id;
+        form.image.value = product.image || '';
+        form.id.value = product.id;
+      }
+      document.getElementById('productModal').classList.add('open');
+    }
+
+    function editProduct(p) { openProductModal(p); }
+
+    document.getElementById('productForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const data = Object.fromEntries(fd.entries());
+      const id = data.id;
+      delete data.id;
+      const url = id ? `${API}/products/${id}` : `${API}/products`;
+      const method = id ? 'PUT' : 'POST';
+      await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      closeModal('productModal');
+      showToast(id ? 'Product updated!' : 'Product added!');
+      loadAdminProducts();
+    });
+
+    async function deleteProduct(id) {
+      if (!confirm('Delete this product?')) return;
+      await fetch(`${API}/products/${id}`, { method: 'DELETE' });
+      showToast('Product deleted!');
+      loadAdminProducts();
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

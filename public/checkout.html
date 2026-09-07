@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Bittrif Shop</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">Bittrif <span>Shop</span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html" class="cart-btn">🛒 Cart <span class="cart-count">0</span></a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2 class="section-title">Checkout</h2>
+    <div id="checkoutContent"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const cart = getCart();
+    if (!cart.length) location.href = 'cart.html';
+
+    const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    const shipping = subtotal > 999 ? 0 : 99;
+    const total = subtotal + shipping;
+
+    document.getElementById('checkoutContent').innerHTML = `
+      <div class="checkout-layout">
+        <div class="card">
+          <h3 style="margin-bottom:1.5rem">Delivery Information</h3>
+          <form id="checkoutForm">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" name="customer_name" required placeholder="Your full name">
+              </div>
+              <div class="form-group">
+                <label>Phone *</label>
+                <input type="tel" name="customer_phone" required placeholder="10-digit number">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" name="customer_email" required placeholder="your@email.com">
+            </div>
+            <div class="form-group">
+              <label>Delivery Address *</label>
+              <textarea name="address" rows="3" required placeholder="House no, Street, City, State, PIN"></textarea>
+            </div>
+            <div class="card" style="background:#f8fafc;margin-bottom:1.5rem">
+              <h4 style="margin-bottom:1rem">Payment Method</h4>
+              <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+                <input type="radio" name="payment" value="cod" checked> Cash on Delivery
+              </label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full" style="padding:.8rem">Place Order — ${formatPrice(total)}</button>
+          </form>
+        </div>
+        <div>
+          <div class="order-summary">
+            <h3>Order Summary</h3>
+            ${cart.map(i => `
+              <div style="display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:.5rem">
+                <span>${i.name} × ${i.quantity}</span>
+                <span>${formatPrice(i.price * i.quantity)}</span>
+              </div>`).join('')}
+            <div class="summary-row" style="margin-top:1rem"><span>Subtotal</span><span>${formatPrice(subtotal)}</span></div>
+            <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? 'FREE' : formatPrice(shipping)}</span></div>
+            <div class="summary-row total"><span>Total</span><span>${formatPrice(total)}</span></div>
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('checkoutForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const btn = e.target.querySelector('button[type=submit]');
+      btn.disabled = true; btn.textContent = 'Placing Order...';
+      try {
+        const res = await fetch(`${API}/orders`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name: fd.get('customer_name'),
+            customer_email: fd.get('customer_email'),
+            customer_phone: fd.get('customer_phone'),
+            address: fd.get('address'),
+            items: cart
+          })
+        });
+        const data = await res.json();
+        saveCart([]);
+        location.href = `order-success.html?id=${data.orderId}`;
+      } catch {
+        showToast('Failed to place order. Try again.');
+        btn.disabled = false; btn.textContent = `Place Order — ${formatPrice(total)}`;
+      }
+    });
+  </script>
+</body>
+</html>

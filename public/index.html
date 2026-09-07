@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bittrif Shop</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">Bittrif <span>Shop</span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html" class="cart-btn">🛒 Cart <span class="cart-count">0</span></a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <h1>Shop Everything You Need</h1>
+    <p>Best products at the best prices — delivered to your door</p>
+    <div class="hero-search">
+      <input type="text" id="searchInput" placeholder="Search products...">
+      <button onclick="doSearch()">Search</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2 class="section-title">Shop by Category</h2>
+    <div class="categories-grid" id="categoriesGrid"></div>
+
+    <h2 class="section-title">Featured Products</h2>
+    <div class="products-grid" id="productsGrid"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    async function loadCategories() {
+      const cats = await fetch(`${API}/categories`).then(r => r.json());
+      document.getElementById('categoriesGrid').innerHTML = cats.map(c => `
+        <a href="products.html?category=${c.id}" class="category-card">
+          <div class="icon">${c.icon}</div>
+          <span>${c.name}</span>
+        </a>`).join('');
+    }
+
+    async function loadProducts() {
+      const products = await fetch(`${API}/products`).then(r => r.json());
+      document.getElementById('productsGrid').innerHTML = products.slice(0, 8).map(p => `
+        <div class="product-card">
+          <img src="${p.image}" alt="${p.name}">
+          <div class="product-info">
+            <span class="cat-badge">${p.category_name || 'General'}</span>
+            <h3>${p.name}</h3>
+            <p class="desc">${p.description || ''}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="price">${formatPrice(p.price)}</span>
+              <button class="btn btn-primary btn-sm" onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function doSearch() {
+      const q = document.getElementById('searchInput').value.trim();
+      if (q) location.href = `products.html?search=${encodeURIComponent(q)}`;
+    }
+    document.getElementById('searchInput').addEventListener('keydown', e => e.key === 'Enter' && doSearch());
+
+    loadCategories();
+    loadProducts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products - Bittrif Shop</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="logo">Bittrif <span>Shop</span></a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="products.html">Products</a>
+      <a href="cart.html" class="cart-btn">🛒 Cart <span class="cart-count">0</span></a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap">
+      <input type="text" id="searchInput" placeholder="Search products..." style="padding:.6rem 1rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none;flex:1;min-width:200px">
+      <select id="categoryFilter" style="padding:.6rem 1rem;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.95rem;outline:none">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+
+    <div class="categories-grid" id="categoriesGrid" style="margin-bottom:2rem"></div>
+    <div class="products-grid" id="productsGrid"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    let activeCategory = params.get('category') || '';
+    let searchQuery = params.get('search') || '';
+
+    document.getElementById('searchInput').value = searchQuery;
+
+    async function loadCategories() {
+      const cats = await fetch(`${API}/categories`).then(r => r.json());
+      const sel = document.getElementById('categoryFilter');
+      cats.forEach(c => {
+        sel.innerHTML += `<option value="${c.id}" ${activeCategory == c.id ? 'selected' : ''}>${c.icon} ${c.name}</option>`;
+      });
+      document.getElementById('categoriesGrid').innerHTML = `
+        <a href="products.html" class="category-card ${!activeCategory ? 'active' : ''}">
+          <div class="icon">🛍️</div><span>All</span>
+        </a>` +
+        cats.map(c => `
+          <a href="products.html?category=${c.id}" class="category-card ${activeCategory == c.id ? 'active' : ''}">
+            <div class="icon">${c.icon}</div><span>${c.name}</span>
+          </a>`).join('');
+    }
+
+    async function loadProducts() {
+      let url = `${API}/products?`;
+      if (activeCategory) url += `category=${activeCategory}&`;
+      if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}`;
+      const products = await fetch(url).then(r => r.json());
+      if (!products.length) {
+        document.getElementById('productsGrid').innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="icon">🔍</div><p>No products found</p></div>`;
+        return;
+      }
+      document.getElementById('productsGrid').innerHTML = products.map(p => `
+        <div class="product-card">
+          <img src="${p.image}" alt="${p.name}" style="cursor:pointer" onclick="location.href='product.html?id=${p.id}'">
+          <div class="product-info">
+            <span class="cat-badge">${p.category_name || 'General'}</span>
+            <h3 style="cursor:pointer" onclick="location.href='product.html?id=${p.id}'">${p.name}</h3>
+            <p class="desc">${p.description || ''}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="price">${formatPrice(p.price)}</span>
+              <button class="btn btn-primary btn-sm" onclick='addToCart(${JSON.stringify(p)})'>Add to Cart</button>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    document.getElementById('searchInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { searchQuery = e.target.value; loadProducts(); }
+    });
+    document.getElementById('categoryFilter').addEventListener('change', e => {
+      activeCategory = e.target.value;
+      loadProducts();
+    });
+
+    loadCategories();
+    loadProducts();
+  </script>
+</body>
+</html>
