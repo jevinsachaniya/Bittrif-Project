@@ -22,7 +22,7 @@ import { useCart } from '../hooks/useCart'
 import { useAuth } from '../hooks/useAuth'
 import { API, formatPrice } from '../lib/utils'
 
-const CHECKOUT_DRAFT_KEY = 'bittrif_checkout_draft'
+const CHECKOUT_DRAFT_KEY = 'nivora_checkout_draft'
 
 function getErrorMessage(error) {
   const detail = error.response?.data?.detail
@@ -259,7 +259,7 @@ export default function Checkout() {
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">Phone number</label>
-                  <input className="input" required value={form.customer_phone} onChange={updateField('customer_phone')} placeholder="+91 98765 43210" />
+                  <input className="input" required value={form.customer_phone} onChange={updateField('customer_phone')} placeholder="+91 72280 41690" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-2 block text-sm font-semibold text-slate-700">Email address</label>
@@ -292,7 +292,7 @@ export default function Checkout() {
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">Company name</label>
-                  <input className="input" value={form.company_name} onChange={updateField('company_name')} placeholder="Bittrif partner company" />
+                  <input className="input" value={form.company_name} onChange={updateField('company_name')} placeholder="Your company or organisation" />
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">GSTIN</label>
@@ -362,7 +362,7 @@ export default function Checkout() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">City</label>
-                    <input className="input" value={form.city} onChange={updateField('city')} placeholder="Mumbai" />
+                  <input className="input" value={form.city} onChange={updateField('city')} placeholder="Ahmedabad" />
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">State</label>
@@ -472,7 +472,7 @@ export default function Checkout() {
                 className="input mt-6 min-h-[140px] resize-none"
                 value={form.order_notes}
                 onChange={updateField('order_notes')}
-                placeholder="Example: call housekeeping supervisor on arrival, include department name on invoice, or reference internal PO number."
+                placeholder="Example: call on arrival, leave with reception, or add a note for the delivery partner."
               />
             </div>
 

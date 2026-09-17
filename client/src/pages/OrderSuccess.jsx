@@ -38,7 +38,7 @@ export default function OrderSuccess() {
 
   return (
     <div className="page-shell">
-      <section className="relative overflow-hidden bg-[linear-gradient(135deg,_#102947,_#1e73c2)] text-white">
+      <section className="relative overflow-hidden bg-[linear-gradient(135deg,_#431407,_#c2410c)] text-white">
         <div className="texture-overlay absolute inset-0 opacity-20" />
         <div className="relative mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
           <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-white/10">
@@ -46,11 +46,10 @@ export default function OrderSuccess() {
           </div>
           <p className="section-kicker mt-8 text-gold-400">Order received</p>
           <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-white md:text-5xl">
-            Your Bittrif order has been placed.
+            Your Nivora order has been placed.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-200">
-            We have your cart, delivery details, and business preferences. Your team can now track this order from the
-            account area while Bittrif follows up on the next steps.
+            We have your cart and delivery details. You can track this order from your account area while Nivora prepares the next steps.
           </p>
           {order ? (
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 py-2.5 text-sm font-semibold">
@@ -171,11 +170,11 @@ export default function OrderSuccess() {
           <Link to="/my-orders" className="btn-outline">
             View my orders
           </Link>
-          <a href="tel:+919876543210" className="btn-outline gap-2">
+          <a href="tel:+917228041690" className="btn-outline gap-2">
             <Phone size={16} />
             Call support
           </a>
-          <a href="mailto:procurement@bittrifgroup.com" className="btn-outline gap-2">
+          <a href="mailto:hello@nivoramart.in" className="btn-outline gap-2">
             <Mail size={16} />
             Email support
           </a>

@@ -20,7 +20,7 @@ from models import ImageUpload, OrderCreate, ProductCreate, StatusUpdate, UserLo
 
 os.environ["PYTHONUTF8"] = "1"
 
-app = FastAPI(title="Bittrif Group API")
+app = FastAPI(title="Nivora Mart API")
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")

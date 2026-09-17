@@ -6,22 +6,19 @@ export default function Logo({ size = 'md', white = false }) {
   }
 
   const current = sizes[size] || sizes.md
-  const titleColor = white ? '#ffffff' : '#082d49'
-  const subtitleColor = white ? '#b9e5ff' : '#087fc5'
+  const titleColor = white ? '#ffffff' : '#431407'
+  const subtitleColor = white ? '#fed7aa' : '#c2410c'
 
   return (
     <div className="flex items-center gap-3">
       <svg width={current.mark} height={current.mark} viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M4 20V4H20" stroke="#5e95f4" strokeWidth="5" strokeLinecap="square" />
-        <path d="M40 4H56V20" stroke="#5e95f4" strokeWidth="5" strokeLinecap="square" />
-        <path d="M4 40V56H20" stroke="#5e95f4" strokeWidth="5" strokeLinecap="square" />
-        <path d="M40 56H56V40" stroke="#5e95f4" strokeWidth="5" strokeLinecap="square" />
-        <rect x="7" y="23" width="46" height="15" rx="1" fill="#5e95f4" />
-        <text x="30" y="34.2" fill="white" textAnchor="middle" style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 11.5, fontWeight: 800, letterSpacing: '0.02em' }}>BITTRIF</text>
+        <rect x="5" y="8" width="50" height="47" rx="15" fill="#ea580c" />
+        <path d="M20 22C20 16.477 24.477 12 30 12C35.523 12 40 16.477 40 22" stroke="#fff7ed" strokeWidth="4" strokeLinecap="round" />
+        <path d="M20 25V42L40 25V42" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <div className="flex flex-col leading-none">
-        <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 800, fontSize: current.title, color: titleColor, letterSpacing: '-0.055em' }}>Bittrif</span>
-        <span style={{ fontFamily: 'DM Sans, system-ui, sans-serif', fontWeight: 700, fontSize: current.subtitle, color: subtitleColor, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 5 }}>Group of Company</span>
+        <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 800, fontSize: current.title, color: titleColor, letterSpacing: '-0.055em' }}>Nivora</span>
+        <span style={{ fontFamily: 'DM Sans, system-ui, sans-serif', fontWeight: 700, fontSize: current.subtitle, color: subtitleColor, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 5 }}>Everyday market</span>
       </div>
     </div>
   )

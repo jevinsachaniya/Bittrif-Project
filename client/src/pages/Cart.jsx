@@ -30,8 +30,8 @@ export default function Cart() {
           </div>
           <h1 className="mt-8 font-display text-4xl font-bold tracking-tight text-slate-950">Your cart is empty</h1>
           <p className="mx-auto mt-4 max-w-lg text-sm leading-7 text-slate-600">
-            Start building your Bittrif order with cleaning supplies, amenities, and other business-ready products.
-            Once items are in the cart, the new checkout can capture company and delivery details too.
+            Discover useful finds for home, travel, gifting, and the little routines that make a day feel better.
+            Add your favourites, then check out securely when you are ready.
           </p>
           <Link to="/products" className="btn-primary mt-8 gap-2">
             Browse catalog
@@ -50,11 +50,10 @@ export default function Cart() {
             <div>
               <p className="section-kicker">Cart review</p>
               <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
-                Review your Bittrif order before checkout.
+            Review your Nivora order before checkout.
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
-                Confirm quantity, keep an eye on commercial pricing, and move ahead with delivery preferences and GST
-                details in the next step.
+                Confirm your items, adjust quantities, and continue to secure delivery and payment details in the next step.
               </p>
             </div>
             <div className="surface-panel p-6">

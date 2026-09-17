@@ -71,7 +71,7 @@ export default function Register() {
             <p className="section-kicker mt-6">Register</p>
             <h2 className="mt-3 font-display text-4xl font-bold tracking-tight text-slate-950">Create your account</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Set up access for the Bittrif storefront and continue to {redirect === '/' ? 'shopping' : 'your next step'} when you finish.
+              Set up your Nivora account and continue to {redirect === '/' ? 'shopping' : 'your next step'} when you finish.
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -116,7 +116,7 @@ export default function Register() {
                   <Phone size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     className="input pl-11"
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 72280 41690"
                     value={form.phone}
                     onChange={updateField('phone')}
                   />

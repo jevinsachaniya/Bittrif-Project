@@ -4,11 +4,11 @@ const CartContext = createContext(null)
 
 export function CartProvider({ children }) {
   const [cart, setCart] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('bittrif_cart') || '[]') } catch { return [] }
+    try { return JSON.parse(localStorage.getItem('nivora_cart') || '[]') } catch { return [] }
   })
 
   useEffect(() => {
-    localStorage.setItem('bittrif_cart', JSON.stringify(cart))
+    localStorage.setItem('nivora_cart', JSON.stringify(cart))
   }, [cart])
 
   const addToCart = (product, quantity = 1) => {

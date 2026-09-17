@@ -35,12 +35,12 @@ export default function Login() {
   }
 
   return (
-    <div className="page-shell min-h-screen bg-[linear-gradient(180deg,_rgba(16,41,71,0.05),_transparent_28rem)]">
+    <div className="page-shell min-h-screen bg-[linear-gradient(180deg,_rgba(249,115,22,0.10),_transparent_28rem)]">
       <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
         <div className="hidden rounded-[2rem] bg-brand-950 p-10 text-white lg:block">
           <Logo white size="lg" />
           <p className="section-kicker mt-10 text-gold-400">Account access</p>
-          <h1 className="mt-4 font-display text-5xl font-bold tracking-tight">Welcome back to the Bittrif buyer portal.</h1>
+          <h1 className="mt-4 font-display text-5xl font-bold tracking-tight">Welcome back to your Nivora account.</h1>
           <p className="mt-5 max-w-lg text-base leading-8 text-slate-200">
             Sign in to track orders, reuse saved contact details, and move from catalog browsing to checkout with less
             repeated work.
@@ -49,7 +49,7 @@ export default function Login() {
             {[
               'Track your orders from one account',
               'Move faster through the new checkout flow',
-              'Keep procurement details connected to your orders',
+              'Keep your details connected to your orders',
             ].map((item) => (
               <div key={item} className="inline-flex items-center gap-3 text-sm text-slate-100">
                 <span className="rounded-2xl bg-white/10 p-2 text-gold-400">

@@ -33,10 +33,10 @@ export default function ProductDetail() {
   const quotePath = `/contact?product=${encodeURIComponent(product.name)}`
   const minimumQuantity = product.minimum_order_quantity || 1
   const specifications = [
-    ['Product category', product.category_name || 'Hotel supplies'],
+    ['Product category', product.category_name || 'Everyday essentials'],
     ['Pack size', product.unit || 'Standard pack'],
     ['Customization available', 'Yes'],
-    ['Usage / application', product.category_name === 'Hotel Amenities' ? 'For hotel guests' : 'For hotels and facilities'],
+    ['Usage / application', 'For everyday use'],
     ['Availability', product.stock > 0 ? 'In stock' : 'On enquiry'],
     ['Country of origin', 'Made in India'],
   ]
@@ -63,7 +63,7 @@ export default function ProductDetail() {
           <section className="min-w-0 flex-1 max-w-2xl">
             <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
               <h1 className="font-display text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">{product.name}</h1>
-              <a href="tel:+919876543210" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-brand-600 bg-white px-4 py-2 text-sm font-bold text-brand-700 hover:bg-brand-50"><Phone size={16} />Request Callback</a>
+              <a href="tel:+917228041690" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-brand-600 bg-white px-4 py-2 text-sm font-bold text-brand-700 hover:bg-brand-50"><Phone size={16} />Request Callback</a>
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2"><span className="text-3xl font-medium text-slate-950">{formatPrice(product.price)}</span><span className="text-sm text-slate-600">/ {product.unit || 'piece'}</span><Link to={quotePath} className="text-lg font-semibold text-brand-700 underline underline-offset-2">Get Latest Price</Link></div>
             <a href={quotePath} className="mt-3 inline-flex items-center gap-2 text-sm text-slate-600 hover:text-brand-700"><FileText size={17} className="text-rose-500" />Product Brochure</a>
@@ -79,8 +79,8 @@ export default function ProductDetail() {
             </div>
             <p className="mt-2 text-xs font-medium text-brand-800">Order quantity must be {minimumQuantity} {product.unit || 'units'} or more.</p>
             <h2 className="mt-4 text-lg font-semibold text-slate-900">{product.name}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{product.description || 'Quality hotel and hospitality supply product available for regular and bulk requirements. Contact Bittrif Group of Company for pricing and customization details.'}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Bittrif Group of Company supplies dependable hotel amenities and cleaning essentials for hotels, resorts, spas, and facility teams.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">{product.description || 'A useful everyday essential, selected for its practical design and easy place in your routine.'}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Nivora Mart brings together thoughtful finds for home, travel, gifting, and everyday living.</p>
 
             <Link to={quotePath} className="mt-5 inline-flex w-full items-center justify-center gap-3 rounded-xl bg-brand-700 px-6 py-4 text-base font-bold text-white hover:bg-brand-800"><Phone size={19} />Yes! I am interested</Link>
             <Link to="/products" className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-900"><RotateCcw size={15} />Back to all products</Link>

@@ -182,16 +182,15 @@ export default function Products() {
   return (
     <div className="page-shell">
       <section className="relative overflow-hidden border-b border-slate-200/70 bg-white/80">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(30,115,194,0.10),_transparent_28rem)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.14),_transparent_28rem)]" />
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-16">
           <div className="relative">
-            <p className="section-kicker">Business-ready catalog</p>
+            <p className="section-kicker">The Nivora edit</p>
             <h1 className="mt-4 font-display text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
-              Source Bittrif products with a cleaner buying flow.
+              Find something useful, beautiful, or both.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
-              Explore hospitality supplies, compare commercial pricing, and move faster with a catalog built for
-              procurement teams, hotels, housekeeping leads, and facility managers.
+              Browse practical pieces for home, travel, wellness, gifting, and all the moments in between.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">

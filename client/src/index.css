@@ -5,10 +5,10 @@
 
 @layer base {
   :root {
-    --brand-ink: #082d49;
-    --brand-blue: #087fc5;
-    --brand-mist: #eff9ff;
-    --brand-gold: #d8a64a;
+    --brand-ink: #431407;
+    --brand-blue: #ea580c;
+    --brand-mist: #fff7ed;
+    --brand-gold: #eab308;
   }
 
   * {
@@ -20,11 +20,11 @@
   }
 
   body {
-    @apply min-h-screen bg-[#f7fbff] font-sans text-slate-900 antialiased;
+    @apply min-h-screen bg-[#fffaf5] font-sans text-slate-900 antialiased;
     background-image:
-      radial-gradient(circle at top left, rgba(74, 191, 255, 0.18), transparent 30rem),
-      radial-gradient(circle at 90% 15%, rgba(25, 159, 233, 0.12), transparent 26rem),
-      linear-gradient(180deg, #ffffff 0%, #f4fbff 48%, #eef8ff 100%);
+      radial-gradient(circle at top left, rgba(251, 146, 60, 0.16), transparent 30rem),
+      radial-gradient(circle at 90% 15%, rgba(253, 224, 71, 0.18), transparent 26rem),
+      linear-gradient(180deg, #fffdfb 0%, #fff7ed 48%, #ffedd5 100%);
   }
 
   a,
@@ -36,7 +36,7 @@
   }
 
   ::selection {
-    background: rgba(25, 159, 233, 0.18);
+    background: rgba(249, 115, 22, 0.18);
     color: var(--brand-ink);
   }
 }
@@ -55,7 +55,7 @@
   }
 
   .card {
-    @apply rounded-2xl border border-brand-100 bg-white/90 shadow-[0_12px_38px_rgba(8,45,73,0.07)] backdrop-blur-sm;
+    @apply rounded-2xl border border-brand-100 bg-white/90 shadow-[0_12px_38px_rgba(124,45,18,0.08)] backdrop-blur-sm;
   }
 
   .badge {
@@ -79,7 +79,7 @@
   }
 
   .surface-panel {
-    @apply rounded-2xl border border-brand-100 bg-white/95 shadow-[0_12px_38px_rgba(8,45,73,0.07)] backdrop-blur;
+    @apply rounded-2xl border border-brand-100 bg-white/95 shadow-[0_12px_38px_rgba(124,45,18,0.08)] backdrop-blur;
   }
 
   .status-pill {
@@ -96,7 +96,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4abfff;
+  background: #f97316;
   border-radius: 999px;
 }
 
@@ -205,11 +205,11 @@
 }
 
 .bg-brand-950 {
-  background-color: #082d49;
+  background-color: #431407;
 }
 
 .from-brand-950 {
-  --tw-gradient-from: #082d49;
+  --tw-gradient-from: #431407;
 }
 
 .texture-overlay {
