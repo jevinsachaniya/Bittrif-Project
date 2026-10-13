@@ -43,6 +43,20 @@ For local overrides, copy `backend/.env.example` to `backend/.env`.
 2. Open the service root URL and test product browsing, login, checkout, and Admin Product image upload.
 3. Add your custom domain from the Render dashboard, then update `CORS_ORIGINS` only if another domain directly calls the API.
 
+## Website Version
+
+The shared storefront footer displays the version from the root `version.json` file.
+
+Before committing a release, update its value, for example:
+
+```json
+{
+  "version": "1.0.1"
+}
+```
+
+Commit `version.json` with your changes, push, and deploy as usual. The frontend build includes this value, so the live footer updates when the new deployment completes. For a local production build, run `cd client` and `npm run build` after changing the version.
+
 ## Security Note
 
 The current admin area does not yet enforce server-side role authorization. Before sharing the public URL broadly, add admin authentication/roles so product and order management endpoints are not publicly writable.

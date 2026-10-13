@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react'
 import Logo from './Logo'
+import { version } from '../../../version.json'
 
 const links = [
   { label: 'Shop all', to: '/products' },
@@ -30,7 +31,7 @@ export default function Footer() {
           <div><h3 className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Made for</h3><div className="mt-5 grid gap-3">{forYou.map((item) => <span key={item} className="text-sm text-white/70">{item}</span>)}</div></div>
           <div><h3 className="text-xs font-bold uppercase tracking-[0.18em] text-brand-200">Contact</h3><div className="mt-5 grid gap-4 text-sm text-white/70"><a href="tel:+917228041690" className="flex items-center gap-3 hover:text-white"><Phone size={16} className="text-brand-200" />+91 72280 41690</a><a href="mailto:hello@nivoramart.in" className="flex items-center gap-3 hover:text-white"><Mail size={16} className="text-brand-200" />hello@nivoramart.in</a><span className="flex items-start gap-3"><MapPin size={16} className="mt-0.5 shrink-0 text-brand-200" />Ahmedabad, Gujarat, India</span></div></div>
         </section>
-        <div className="flex flex-col gap-2 border-t border-white/10 py-5 text-xs text-white/45 sm:flex-row sm:justify-between"><span>Copyright {new Date().getFullYear()} Nivora Mart. All rights reserved.</span><span>Secure checkout and easy order support</span></div>
+        <div className="flex flex-col gap-2 border-t border-white/10 py-5 text-xs text-white/45 sm:flex-row sm:justify-between"><span>Copyright {new Date().getFullYear()} Nivora Mart. All rights reserved.</span><div className="flex flex-wrap items-center gap-x-4 gap-y-2"><span>Secure checkout and easy order support</span><span className="whitespace-nowrap">Version {version}</span></div></div>
       </div>
     </footer>
   )
