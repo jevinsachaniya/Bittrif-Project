@@ -4,8 +4,8 @@ import Logo from './Logo'
 
 const links = [
   { label: 'Shop all', to: '/products' },
-  { label: 'New arrivals', to: '/products' },
-  { label: 'Home and living', to: '/products' },
+  { label: 'The featured edit', to: '/products?featured=1' },
+  { label: 'Home and living', to: '/products?search=home' },
   { label: 'Our story', to: '/about' },
   { label: 'Contact us', to: '/contact' },
 ]
@@ -14,7 +14,7 @@ const forYou = ['Home refreshers', 'Travel lovers', 'Thoughtful gifting', 'Every
 
 export default function Footer() {
   return (
-    <footer className="mt-16 bg-brand-950 text-white">
+    <footer className="site-footer bg-brand-950 text-white">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <section className="grid gap-6 border-b border-white/10 py-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div>

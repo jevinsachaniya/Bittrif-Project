@@ -5,9 +5,10 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import uuid
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,7 +17,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from database import DATA_DIR, get_db, init_db
-from models import ImageUpload, OrderCreate, ProductCreate, StatusUpdate, UserLogin, UserRegister
+from models import ImageUpload, OrderCreate, ProductCreate, ProductVisitCreate, StatusUpdate, UserLogin, UserRegister, VisitorContact
 
 os.environ["PYTHONUTF8"] = "1"
 
@@ -64,6 +65,32 @@ def normalize_email(email):
 def validate_email(email):
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
         raise HTTPException(status_code=422, detail="Enter a valid email address")
+
+
+def create_auth_session(conn, user):
+    token = secrets.token_urlsafe(32)
+    conn.execute("DELETE FROM auth_sessions WHERE expires_at <= CURRENT_TIMESTAMP")
+    conn.execute(
+        "INSERT INTO auth_sessions (token_hash, user_id, expires_at) VALUES (?, ?, datetime('now', '+30 days'))",
+        (hash_pw(token), user["id"]),
+    )
+    conn.commit()
+    return {"id": user["id"], "name": user["name"], "email": user["email"], "phone": user["phone"], "token": token}
+
+
+def visit_user(conn, authorization):
+    if not authorization:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Please log in again")
+    user = conn.execute(
+        "SELECT u.* FROM auth_sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > CURRENT_TIMESTAMP",
+        (hash_pw(token),),
+    ).fetchone()
+    if not user:
+        raise HTTPException(status_code=401, detail="Please log in again")
+    return user
 
 
 def serialize_product(row):
@@ -116,8 +143,10 @@ def register(body: UserRegister):
     )
     conn.commit()
     user_id = cursor.lastrowid
+    user = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    result = create_auth_session(conn, user)
     conn.close()
-    return {"id": user_id, "name": body.name.strip(), "email": email}
+    return result
 
 
 @app.post("/api/auth/login")
@@ -129,11 +158,116 @@ def login(body: UserLogin):
         "SELECT * FROM users WHERE email=? AND password=?",
         (email, hash_pw(body.password)),
     ).fetchone()
-    conn.close()
     if not user:
+        conn.close()
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    user_dict = dict(user)
-    return {"id": user_dict["id"], "name": user_dict["name"], "email": user_dict["email"]}
+    result = create_auth_session(conn, user)
+    conn.close()
+    return result
+
+
+@app.post("/api/product-visits")
+def record_product_visit(body: ProductVisitCreate, authorization: str = Header(default=None)):
+    conn = get_db()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        user = visit_user(conn, authorization)
+        user_id = user["id"] if user else None
+        existing = conn.execute("SELECT * FROM product_visit_events WHERE visit_key=?", (str(body.visit_key),)).fetchone()
+        if existing:
+            if (existing["visitor_id"] != str(body.visitor_id) or existing["product_id"] != body.product_id
+                    or existing["user_id"] != user_id):
+                raise HTTPException(status_code=409, detail="Visit does not match")
+            return {"success": True}
+        product = conn.execute("SELECT id, name FROM products WHERE id=?", (body.product_id,)).fetchone()
+        if not product:
+            raise HTTPException(status_code=404, detail="Product not found")
+        conn.execute(
+            """INSERT INTO product_visits
+            (visit_key, visitor_id, product_id, product_name, user_id, customer_name, customer_email, customer_phone, source, visitor_identity)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(visitor_identity, product_id) DO UPDATE SET
+                visit_count=product_visits.visit_count + 1,
+                last_visited_at=CURRENT_TIMESTAMP,
+                product_name=excluded.product_name,
+                customer_name=COALESCE(excluded.customer_name, product_visits.customer_name),
+                customer_email=COALESCE(excluded.customer_email, product_visits.customer_email),
+                customer_phone=COALESCE(excluded.customer_phone, product_visits.customer_phone),
+                source=CASE WHEN excluded.source='account' THEN 'account' ELSE product_visits.source END""",
+            (str(body.visit_key), str(body.visitor_id), product["id"], product["name"],
+             user["id"] if user else None, user["name"] if user else None,
+             user["email"] if user else None, user["phone"] if user else None,
+             "account" if user else "guest", f"account:{user_id}" if user else f"guest:{body.visitor_id}"),
+        )
+        identity = f"account:{user_id}" if user else f"guest:{body.visitor_id}"
+        stored = conn.execute("SELECT id FROM product_visits WHERE visitor_identity=? AND product_id=?", (identity, body.product_id)).fetchone()
+        conn.execute(
+            "INSERT INTO product_visit_events (visit_key, visitor_id, product_id, user_id, visit_id) VALUES (?, ?, ?, ?, ?)",
+            (str(body.visit_key), str(body.visitor_id), body.product_id, user_id, stored["id"]),
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        conn.close()
+
+
+@app.put("/api/product-visits/{visit_key}/contact")
+def save_visitor_contact(visit_key: uuid.UUID, body: VisitorContact):
+    name = body.name.strip()
+    email = normalize_email(body.email or "")
+    phone = (body.phone or "").strip()
+    if len(name) < 2:
+        raise HTTPException(status_code=422, detail="Enter your name")
+    if email:
+        validate_email(email)
+    if phone and (not re.fullmatch(r"\+?[0-9 ()-]+", phone) or not 7 <= len(re.sub(r"\D", "", phone)) <= 15):
+        raise HTTPException(status_code=422, detail="Enter a valid phone number")
+    if not email and not phone:
+        raise HTTPException(status_code=422, detail="Enter an email address or phone number, or choose Skip")
+    conn = get_db()
+    try:
+        row = conn.execute(
+            "SELECT visit_id, user_id FROM product_visit_events WHERE visit_key=? AND visitor_id=?",
+            (str(visit_key), str(body.visitor_id)),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Visit not found")
+        if row["user_id"] is not None:
+            raise HTTPException(status_code=409, detail="This visit already uses account details")
+        conn.execute(
+            "UPDATE product_visits SET customer_name=?, customer_email=?, customer_phone=?, source='shared' WHERE visitor_id=? AND user_id IS NULL",
+            (name, email or None, phone or None, str(body.visitor_id)),
+        )
+        conn.commit()
+        return {"success": True}
+    finally:
+        conn.close()
+
+
+@app.get("/api/admin/product-visits")
+def get_product_visits(search: str = Query(default="", max_length=200), source: str = "all",
+                      page: int = Query(default=1, ge=1), page_size: int = Query(default=25, ge=1, le=100)):
+    if source not in {"all", "account", "shared", "guest"}:
+        raise HTTPException(status_code=422, detail="Select a valid visitor type")
+    clauses, params = [], []
+    if search.strip():
+        clauses.append("(customer_name LIKE ? OR customer_email LIKE ? OR customer_phone LIKE ? OR product_name LIKE ?)")
+        params.extend([f"%{search.strip()}%"] * 4)
+    if source != "all":
+        clauses.append("source=?")
+        params.append(source)
+    where = " WHERE " + " AND ".join(clauses) if clauses else ""
+    conn = get_db()
+    try:
+        total = conn.execute("SELECT COUNT(*) FROM product_visits" + where, params).fetchone()[0]
+        rows = conn.execute(
+            "SELECT id, product_id, product_name, customer_name, customer_email, customer_phone, source, created_at, last_visited_at, visit_count FROM product_visits"
+            + where + " ORDER BY last_visited_at DESC, id DESC LIMIT ? OFFSET ?",
+            [*params, page_size, (page - 1) * page_size],
+        ).fetchall()
+        return {"items": [dict(row) for row in rows], "total": total, "page": page, "page_size": page_size}
+    finally:
+        conn.close()
 
 
 @app.get("/api/my-orders")

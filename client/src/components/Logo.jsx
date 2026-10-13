@@ -6,14 +6,14 @@ export default function Logo({ size = 'md', white = false }) {
   }
 
   const current = sizes[size] || sizes.md
-  const titleColor = white ? '#ffffff' : '#431407'
-  const subtitleColor = white ? '#fed7aa' : '#c2410c'
+  const titleColor = white ? '#ffffff' : '#1d2e25'
+  const subtitleColor = white ? '#ccd7c4' : '#3e5738'
 
   return (
     <div className="flex items-center gap-3">
       <svg width={current.mark} height={current.mark} viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect x="5" y="8" width="50" height="47" rx="15" fill="#ea580c" />
-        <path d="M20 22C20 16.477 24.477 12 30 12C35.523 12 40 16.477 40 22" stroke="#fff7ed" strokeWidth="4" strokeLinecap="round" />
+        <rect x="5" y="8" width="50" height="47" rx="15" fill="#506c48" />
+        <path d="M20 22C20 16.477 24.477 12 30 12C35.523 12 40 16.477 40 22" stroke="#f3f5ef" strokeWidth="4" strokeLinecap="round" />
         <path d="M20 25V42L40 25V42" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <div className="flex flex-col leading-none">

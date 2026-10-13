@@ -4,6 +4,8 @@ import axios from 'axios'
 import { ChevronLeft, ChevronRight, FileText, Minus, Phone, Plus, RotateCcw, ShoppingBag } from 'lucide-react'
 import { API, formatPrice } from '../lib/utils'
 import { useCart } from '../hooks/useCart'
+import ProductImage from '../components/ProductImage'
+import ProductVisitTracker from '../components/ProductVisitTracker'
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -49,18 +51,19 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-white">
+      <ProductVisitTracker key={product.id} product={product} />
       <main className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 lg:py-7">
-        <div className="flex items-start gap-6 border-t border-slate-200 pt-5 sm:gap-8 lg:gap-14">
-          <section className="w-5/12 shrink-0 lg:w-[420px]">
-            <div className="relative overflow-hidden bg-slate-950">
-              <img src={currentImage} alt={product.name} className="aspect-[4/5] w-full object-contain" />
+        <div className="flex flex-col items-start gap-6 border-t border-slate-200 pt-5 md:flex-row sm:gap-8 lg:gap-14">
+          <section className="w-full shrink-0 md:w-5/12 lg:w-[420px]">
+            <div className="relative overflow-hidden rounded-2xl bg-brand-50">
+              <ProductImage key={currentImage} src={currentImage} alt={product.name} loading="eager" className="product-detail-image" imageClassName="aspect-[4/5] w-full object-contain" />
               <Link to={quotePath} className="absolute bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-white px-8 py-3 text-sm font-bold text-brand-700 shadow-xl hover:bg-brand-50">Get Best Quote</Link>
               {images.length > 1 && <><button onClick={() => moveImage(-1)} className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-slate-900 shadow hover:bg-white" aria-label="Previous product image"><ChevronLeft size={24} /></button><button onClick={() => moveImage(1)} className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-slate-900 shadow hover:bg-white" aria-label="Next product image"><ChevronRight size={24} /></button></>}
             </div>
             {images.length > 1 && <div className="mt-4 flex gap-3 overflow-x-auto pb-1">{images.map((image, index) => <button key={image} onClick={() => setActiveImage(index)} className={`h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 bg-white ${activeImage === index ? 'border-brand-700' : 'border-slate-200 hover:border-brand-300'}`} aria-label={`View product image ${index + 1}`}><img src={image} alt="" className="h-full w-full object-cover" /></button>)}</div>}
           </section>
 
-          <section className="min-w-0 flex-1 max-w-2xl">
+          <section className="w-full min-w-0 flex-1 max-w-2xl">
             <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
               <h1 className="font-display text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">{product.name}</h1>
               <a href="tel:+917228041690" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-brand-600 bg-white px-4 py-2 text-sm font-bold text-brand-700 hover:bg-brand-50"><Phone size={16} />Request Callback</a>

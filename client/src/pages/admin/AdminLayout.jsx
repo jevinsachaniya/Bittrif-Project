@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { ChevronRight, LayoutDashboard, LogOut, Menu, Package, ShoppingBag, Store, X } from 'lucide-react'
+import { ChevronRight, LayoutDashboard, LogOut, Menu, Package, ShoppingBag, Store, Users, X } from 'lucide-react'
 import Logo from '../../components/Logo'
 
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { to: '/admin/products', label: 'Products', icon: Package },
+  { to: '/admin/product-visitors', label: 'Product Visitors', icon: Users },
 ]
 
 const pageTitles = {
   '/admin': 'Dashboard',
   '/admin/orders': 'Orders',
   '/admin/products': 'Products',
+  '/admin/product-visitors': 'Product Visitors',
 }
 
 export default function AdminLayout() {
@@ -20,7 +22,7 @@ export default function AdminLayout() {
   const { pathname } = useLocation()
 
   return (
-    <div className="min-h-screen bg-[#f3f9fd] lg:flex">
+    <div className="min-h-screen bg-[#f5f6f1] lg:flex">
       {sidebarOpen && <button className="fixed inset-0 z-40 bg-brand-950/55 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} aria-label="Close navigation" />}
 
       <aside className={`fixed inset-y-0 left-0 z-50 flex w-[278px] flex-col overflow-hidden bg-brand-950 text-white shadow-2xl shadow-brand-950/30 transition-transform duration-300 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -71,7 +73,7 @@ export default function AdminLayout() {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-brand-100/80 bg-white/90 px-4 backdrop-blur-xl sm:px-7">
+        <header className="sticky top-0 z-30 flex h-[64px] items-center justify-between border-b border-brand-100/80 bg-white/90 px-4 backdrop-blur-xl sm:px-7">
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="rounded-xl border border-brand-100 bg-brand-50 p-2 text-brand-800 transition-colors hover:bg-brand-100 lg:hidden" aria-label="Open navigation">
               <Menu size={20} />
@@ -88,8 +90,8 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="min-h-[calc(100vh-76px)] bg-[radial-gradient(circle_at_100%_0%,rgba(134,213,255,0.3),transparent_28rem)] p-4 sm:p-7">
-          <Outlet />
+        <main className="min-h-[calc(100vh-64px)] bg-[#f5f6f1] p-4 sm:p-7">
+          <div key={pathname} className="admin-page-content"><Outlet /></div>
         </main>
       </div>
     </div>

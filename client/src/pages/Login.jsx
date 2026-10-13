@@ -35,7 +35,7 @@ export default function Login() {
   }
 
   return (
-    <div className="page-shell min-h-screen bg-[linear-gradient(180deg,_rgba(249,115,22,0.10),_transparent_28rem)]">
+    <div className="page-shell min-h-screen bg-[linear-gradient(180deg,_rgba(107,133,96,0.10),_transparent_28rem)]">
       <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
         <div className="hidden rounded-[2rem] bg-brand-950 p-10 text-white lg:block">
           <Logo white size="lg" />

@@ -54,6 +54,50 @@ def ensure_product_columns(cursor):
         cursor.execute("ALTER TABLE products ADD COLUMN minimum_order_quantity INTEGER DEFAULT 1")
 
 
+def ensure_product_visit_columns(cursor):
+    columns = {row["name"] for row in cursor.execute("PRAGMA table_info(product_visits)").fetchall()}
+    additions = {
+        "visitor_identity": "TEXT",
+        "visit_count": "INTEGER NOT NULL DEFAULT 1",
+        "last_visited_at": "DATETIME",
+    }
+    for name, definition in additions.items():
+        if name not in columns:
+            cursor.execute(f"ALTER TABLE product_visits ADD COLUMN {name} {definition}")
+
+    indexes = {row["name"] for row in cursor.execute("PRAGMA index_list(product_visits)").fetchall()}
+    if "idx_product_visits_unique_client_product" not in indexes:
+        # Consolidate the previous per-visit records once, retaining request keys
+        # for retries and contact submissions without duplicating client details.
+        groups = {}
+        for row in cursor.execute("SELECT * FROM product_visits ORDER BY id").fetchall():
+            identity = f"account:{row['user_id']}" if row["user_id"] is not None else f"guest:{row['visitor_id']}"
+            groups.setdefault((identity, row["product_id"]), []).append(dict(row))
+        for (identity, _), rows in groups.items():
+            canonical = rows[0]
+            latest = rows[-1]
+            details = max(rows, key=lambda row: (row["source"] != "guest", row["id"]))
+            first_visit = min(row["created_at"] for row in rows)
+            last_visit = max(row["last_visited_at"] or row["created_at"] for row in rows)
+            count = sum(row["visit_count"] for row in rows)
+            for row in rows:
+                cursor.execute(
+                    "INSERT OR IGNORE INTO product_visit_events (visit_key, visitor_id, product_id, user_id, visit_id) VALUES (?, ?, ?, ?, ?)",
+                    (row["visit_key"], row["visitor_id"], row["product_id"], row["user_id"], canonical["id"]),
+                )
+                cursor.execute("UPDATE product_visit_events SET visit_id=? WHERE visit_id=?", (canonical["id"], row["id"]))
+                if row["id"] != canonical["id"]:
+                    cursor.execute("DELETE FROM product_visits WHERE id=?", (row["id"],))
+            cursor.execute(
+                """UPDATE product_visits SET visitor_identity=?, visit_count=?, created_at=?, last_visited_at=?,
+                product_name=?, customer_name=?, customer_email=?, customer_phone=?, source=? WHERE id=?""",
+                (identity, count, first_visit, last_visit, latest["product_name"], details["customer_name"],
+                 details["customer_email"], details["customer_phone"], details["source"], canonical["id"]),
+            )
+        cursor.execute("CREATE UNIQUE INDEX idx_product_visits_unique_client_product ON product_visits(visitor_identity, product_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_product_visits_last_visit ON product_visits(last_visited_at DESC, id DESC)")
+
+
 def product_gallery(name, category_name, position):
     palettes = [
         ("#e9f7ff", "#087fc5", "#082d49"),
@@ -117,6 +161,37 @@ def init_db():
             password TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            expires_at DATETIME NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+        CREATE TABLE IF NOT EXISTS product_visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            visit_key TEXT UNIQUE NOT NULL,
+            visitor_id TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
+            product_name TEXT NOT NULL,
+            user_id INTEGER,
+            customer_name TEXT,
+            customer_email TEXT,
+            customer_phone TEXT,
+            source TEXT NOT NULL DEFAULT 'guest',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            visitor_identity TEXT NOT NULL,
+            visit_count INTEGER NOT NULL DEFAULT 1,
+            last_visited_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS product_visit_events (
+            visit_key TEXT PRIMARY KEY,
+            visitor_id TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
+            user_id INTEGER,
+            visit_id INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_product_visits_created ON product_visits(created_at DESC, id DESC);
+        CREATE INDEX IF NOT EXISTS idx_product_visits_identity ON product_visits(visitor_id, product_id);
         CREATE TABLE IF NOT EXISTS orders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
@@ -145,6 +220,7 @@ def init_db():
 
     ensure_order_columns(c)
     ensure_product_columns(c)
+    ensure_product_visit_columns(c)
     conn.commit()
 
     categories = [

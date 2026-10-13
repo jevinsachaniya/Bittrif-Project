@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react'
 import ProductCard from '../components/ProductCard'
+import ProductImage from '../components/ProductImage'
 import { formatPrice, API } from '../lib/utils'
 
 const SORT_OPTIONS = [
@@ -31,13 +32,13 @@ function ProductListCard({ product }) {
   const quotePath = `/contact?product=${encodeURIComponent(product.name)}`
 
   return (
-    <article className="surface-panel group grid gap-5 p-5 md:grid-cols-[180px_1fr]">
+    <article className="surface-panel product-hover group grid gap-5 p-5 md:grid-cols-[180px_1fr]">
       <Link to={`/product/${product.id}`} className="relative overflow-hidden rounded-3xl bg-slate-100">
-        <img
+        <ProductImage
           src={product.image}
           alt={product.name}
           loading="lazy"
-          className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          imageClassName="h-44 w-full object-cover"
         />
         {discount ? (
           <span className="badge absolute left-3 top-3 bg-rose-500 text-white">
@@ -99,7 +100,7 @@ export default function Products() {
   const [search, setSearch] = useState(searchParams.get('search') || '')
   const [view, setView] = useState('grid')
   const [sort, setSort] = useState('recommended')
-  const [featuredOnly, setFeaturedOnly] = useState(searchParams.get('featured') === '1')
+  const featuredOnly = searchParams.get('featured') === '1'
   const [inStockOnly, setInStockOnly] = useState(false)
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
@@ -118,6 +119,7 @@ export default function Products() {
   }, [activeSearch])
 
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
     setError('')
     const params = {}
@@ -126,16 +128,18 @@ export default function Products() {
     if (featuredOnly) params.featured = true
 
     axios
-      .get(`${API}/products`, { params })
+      .get(`${API}/products`, { params, signal: controller.signal })
       .then((response) => {
         setProducts(response.data)
         setLoading(false)
       })
-      .catch(() => {
+      .catch((requestError) => {
+        if (axios.isCancel(requestError)) return
         setProducts([])
         setError('The catalog is unavailable right now. Check your connection and try again.')
         setLoading(false)
       })
+    return () => controller.abort()
   }, [activeCategory, activeSearch, featuredOnly, retry])
 
   const activeCategoryData = categories.find((category) => String(category.id) === String(activeCategory))
@@ -156,7 +160,6 @@ export default function Products() {
 
   const clearFilters = () => {
     setSearch('')
-    setFeaturedOnly(false)
     setInStockOnly(false)
     setSort('recommended')
     setMinPrice('')
@@ -182,7 +185,7 @@ export default function Products() {
   return (
     <div className="page-shell">
       <section className="relative overflow-hidden border-b border-slate-200/70 bg-white/80">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.14),_transparent_28rem)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(107,133,96,0.12),_transparent_28rem)]" />
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-16">
           <div className="relative">
             <p className="section-kicker">The Nivora edit</p>
@@ -212,14 +215,15 @@ export default function Products() {
           <div className="surface-panel relative p-6 sm:p-7">
             <div className="flex items-center gap-3 text-sm font-semibold text-brand-800">
               <Sparkles size={18} />
-              Catalog tools
+              Find your everyday favourites
             </div>
             <div className="mt-5 flex items-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
               <input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 onKeyDown={(event) => event.key === 'Enter' && doSearch()}
-                placeholder="Search disinfectants, amenities, floor care..."
+                placeholder="Search the collection..."
+                aria-label="Search products"
                 className="w-full bg-transparent px-4 py-4 text-sm text-slate-900 outline-none"
               />
               {search ? (
@@ -227,14 +231,20 @@ export default function Products() {
                   <X size={16} />
                 </button>
               ) : null}
-              <button onClick={doSearch} className="bg-brand-700 px-5 py-4 text-white hover:bg-brand-800">
+              <button onClick={doSearch} aria-label="Search collection" className="bg-brand-700 px-5 py-4 text-white hover:bg-brand-800">
                 <Search size={18} />
               </button>
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <button
-                onClick={() => setFeaturedOnly((value) => !value)}
+                aria-pressed={featuredOnly}
+                onClick={() => {
+                  const nextParams = new URLSearchParams(searchParams)
+                  if (featuredOnly) nextParams.delete('featured')
+                  else nextParams.set('featured', '1')
+                  setSearchParams(nextParams)
+                }}
                 className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold ${
                   featuredOnly ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-slate-200 bg-white text-slate-700'
                 }`}
@@ -243,6 +253,7 @@ export default function Products() {
               </button>
               <button
                 onClick={() => setInStockOnly((value) => !value)}
+                aria-pressed={inStockOnly}
                 className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold ${
                   inStockOnly ? 'border-brand-300 bg-brand-50 text-brand-800' : 'border-slate-200 bg-white text-slate-700'
                 }`}
@@ -315,6 +326,7 @@ export default function Products() {
                   <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700">
                     <ArrowUpDown size={16} className="text-brand-700" />
                     <select
+                      aria-label="Sort products"
                       value={sort}
                       onChange={(event) => setSort(event.target.value)}
                       className="bg-transparent outline-none"
@@ -330,6 +342,7 @@ export default function Products() {
                   <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1">
                     <button
                       onClick={() => setView('grid')}
+                      aria-pressed={view === 'grid'}
                       className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold ${
                         view === 'grid' ? 'bg-brand-700 text-white' : 'text-slate-600'
                       }`}
@@ -339,6 +352,7 @@ export default function Products() {
                     </button>
                     <button
                       onClick={() => setView('list')}
+                      aria-pressed={view === 'list'}
                       className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold ${
                         view === 'list' ? 'bg-brand-700 text-white' : 'text-slate-600'
                       }`}

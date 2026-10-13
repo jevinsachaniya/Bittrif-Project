@@ -1,52 +1,57 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
-import { ArrowUpRight, Check, Gift, Heart, PackageCheck, Search, Sparkles, Truck } from 'lucide-react'
+import { ArrowUpRight, Gift, Heart, ShieldCheck } from 'lucide-react'
+import CinematicHero from '../components/CinematicHero'
 import ProductCard from '../components/ProductCard'
+import { Reveal } from '../components/SiteExperience'
 import { API } from '../lib/utils'
 
-const categoryImages = [
-  'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=900&q=80',
-  'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=900&q=80',
-  'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=900&q=80',
-  'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900&q=80',
-]
+const categoryImages = ['https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=900&q=80', 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&q=80', 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800&q=80', 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80']
 
 export default function Home() {
   const [categories, setCategories] = useState([])
   const [featured, setFeatured] = useState([])
-  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [retry, setRetry] = useState(0)
+  const [activeCategory, setActiveCategory] = useState('all')
 
   useEffect(() => {
-    axios.get(`${API}/categories`).then((response) => setCategories(response.data)).catch(() => {})
-    axios.get(`${API}/products?featured=true`).then((response) => setFeatured(response.data)).catch(() => {})
-  }, [])
+    const controller = new AbortController()
+    Promise.all([
+      axios.get(API + '/categories', { signal: controller.signal }),
+      axios.get(API + '/products?featured=true', { signal: controller.signal }),
+    ]).then(([categoryResponse, productResponse]) => {
+      setCategories(categoryResponse.data)
+      setFeatured(productResponse.data)
+    }).catch((requestError) => { if (!axios.isCancel(requestError)) setError(true) })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [retry])
 
-  return (
-    <div className="page-shell">
-      <section className="relative overflow-hidden bg-brand-950">
-        <img src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=1800&q=85" alt="Warm, thoughtfully arranged home" className="absolute inset-0 h-full w-full object-cover opacity-30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-brand-950 via-brand-950/90 to-brand-900/35" />
-        <div className="relative mx-auto grid min-h-[590px] max-w-7xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
-          <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-brand-200/30 bg-white/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-100"><Sparkles size={14} /> Nivora everyday market</p>
-            <h1 className="mt-6 max-w-3xl font-display text-5xl font-bold leading-[1.03] tracking-[-0.055em] text-white md:text-6xl">Small finds for a more beautiful everyday.</h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-white/75">A considered collection of home, travel, wellness, and gifting essentials chosen for the rituals that make life feel good.</p>
-            <div className="mt-8 flex max-w-xl overflow-hidden rounded-xl bg-white shadow-2xl"><input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && (window.location.href = `/products?search=${encodeURIComponent(search)}`)} placeholder="Search for something useful..." className="min-w-0 flex-1 px-5 py-4 text-sm text-slate-900 outline-none" /><Link to={`/products?search=${encodeURIComponent(search)}`} className="grid w-14 place-items-center bg-brand-600 text-white hover:bg-brand-700" aria-label="Search products"><Search size={20} /></Link></div>
-            <div className="mt-7 flex flex-wrap gap-3"><Link to="/products" className="btn-primary gap-2">Shop the edit <ArrowUpRight size={16} /></Link><Link to="/about" className="btn-outline border-white/30 bg-white/10 text-white hover:bg-white/20">Meet Nivora</Link></div>
-            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm text-white/80">{['Useful by design', 'Easy, secure ordering', 'Made for everyday gifting'].map((item) => <span key={item} className="inline-flex items-center gap-2"><Check size={16} className="text-gold-400" />{item}</span>)}</div>
-          </div>
-          <div className="hidden lg:block"><div className="ml-auto max-w-sm rounded-2xl border border-white/15 bg-white/[0.1] p-5 backdrop-blur"><img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=700&q=85" alt="Nivora home collection" className="h-56 w-full rounded-xl object-cover" /><div className="mt-5 grid gap-3">{[[Heart, 'Thoughtfully picked', 'Every item earns a place in your routine.'], [Gift, 'Ready to gift', 'Useful finds for people you care about.'], [Truck, 'Order with ease', 'Simple checkout and helpful support.']].map(([Icon, title, text]) => <div key={title} className="flex gap-3"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/10 text-brand-100"><Icon size={18} /></span><div><p className="text-sm font-bold text-white">{title}</p><p className="mt-1 text-xs leading-5 text-white/60">{text}</p></div></div>)}</div></div></div>
-        </div>
-      </section>
+  const shownProducts = featured.filter((product) => activeCategory === 'all' || String(product.category_id) === activeCategory).slice(0, 4)
+  const featuredCategories = categories.filter((category) => featured.some((product) => String(product.category_id) === String(category.id)))
 
-      <section className="border-b border-brand-100 bg-white"><div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:grid-cols-3 sm:px-6 lg:px-8">{[[Heart, 'Chosen with care', 'Practical, pleasing essentials for real routines.'], [PackageCheck, 'Easy ordering', 'Clear product details and secure checkout.'], [Gift, 'A lovely gift', 'Useful little upgrades for someone special.']].map(([Icon, title, text]) => <div key={title} className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-full bg-brand-50 text-brand-800"><Icon size={20} /></span><div><p className="text-sm font-bold text-slate-900">{title}</p><p className="mt-0.5 text-xs leading-5 text-slate-500">{text}</p></div></div>)}</div></section>
+  return <div className="page-shell home-page">
+    <CinematicHero />
 
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"><div className="flex items-end justify-between gap-5"><div><p className="section-kicker">Browse the edit</p><h2 className="mt-3 section-title">Find your everyday favourites.</h2></div><Link to="/products" className="hidden text-sm font-bold text-brand-800 sm:inline-flex">Shop everything <ArrowUpRight size={15} className="ml-1" /></Link></div><div className="mt-9 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">{categories.slice(0, 8).map((category, index) => <Link key={category.id} to={`/products?category=${category.id}`} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-brand-950"><img src={categoryImages[index % categoryImages.length]} alt={category.name} className="h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-105" /><div className="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/20 to-transparent" /><div className="absolute bottom-0 p-4"><p className="text-sm font-bold text-white">{category.name}</p><span className="mt-2 inline-flex items-center text-xs font-semibold text-brand-100">Explore <ArrowUpRight size={14} className="ml-1" /></span></div></Link>)}</div></section>
+    <section className="promise-strip"><div className="mx-auto grid max-w-7xl gap-5 px-6 py-6 sm:grid-cols-3 lg:px-8">{[[Heart, 'Thoughtfully selected', 'Every piece has a purpose.'], [ShieldCheck, 'Simple, secure shopping', 'An easier way to find your favourites.'], [Gift, 'Little things, lovely gifts', 'Something meaningful for someone special.']].map(([Icon, title, description]) => <div key={title} className="flex items-center gap-4"><Icon size={23} strokeWidth={1.4} className="shrink-0 text-brand-700" /><div><p className="text-sm font-semibold text-brand-950">{title}</p><p className="mt-1 text-xs text-slate-500">{description}</p></div></div>)}</div></section>
 
-      <section className="bg-brand-50 py-20"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div className="flex items-end justify-between gap-5"><div><p className="section-kicker">Nivora favourites</p><h2 className="mt-3 section-title">Popular pieces, picked for you.</h2></div><Link to="/products" className="btn-outline hidden sm:inline-flex">View all</Link></div><div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{featured.slice(0, 4).map((product) => <ProductCard key={product.id} product={product} />)}</div>{!featured.length && <div className="surface-panel mt-8 p-10 text-center text-sm text-slate-500">Products will appear here once the API is running.</div>}</div></section>
+    <section id="discover" className="section-space mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <Reveal className="section-heading"><div><p className="section-kicker">Consider this your inspiration</p><h2 className="section-title mt-3">A little something for every day.</h2></div><Link to="/products" className="text-link">Explore all <ArrowUpRight size={17} /></Link></Reveal>
+      <div className="mt-9 grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {loading ? Array.from({ length: 4 }, (_, index) => <div key={index} className="skeleton aspect-[4/5] rounded-2xl" aria-label="Loading collection" />) : categories.slice(0, 4).map((category, index) => <Reveal key={category.id} delay={index * 0.06}><Link to={'/products?category=' + category.id} className="collection-card group"><img src={categoryImages[index]} alt={category.name} loading="lazy" /><div className="collection-shade" /><span className="collection-number">0{index + 1}</span><div className="collection-caption"><div><p>THE COLLECTION</p><h3>{category.name}</h3></div><span className="collection-arrow"><ArrowUpRight size={21} /></span></div></Link></Reveal>)}
+      </div>
+    </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"><div className="grid gap-8 rounded-2xl bg-brand-900 p-8 text-white md:grid-cols-[1.2fr_0.8fr] md:items-center md:p-12"><div><p className="text-[11px] font-bold uppercase tracking-[0.22em] text-brand-200">A little help goes a long way</p><h2 className="mt-3 max-w-2xl font-display text-4xl font-bold tracking-[-0.045em]">Looking for something specific?</h2><p className="mt-4 max-w-2xl text-sm leading-7 text-white/70">Tell us what you have in mind. We are happy to help you choose a gift, find an item, or answer an order question.</p></div><div className="flex flex-wrap gap-3 md:justify-end"><Link to="/contact" className="rounded-full bg-white px-5 py-3 font-semibold text-brand-900">Contact Nivora</Link><a href="tel:+917228041690" className="rounded-full border border-white/30 px-5 py-3 font-semibold text-white">Call us</a></div></div></section>
-    </div>
-  )
+    <section className="featured-section section-space"><div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+      <Reveal className="section-heading"><div><p className="section-kicker">Meet your new favourites</p><h2 className="section-title mt-3">Good finds. Great company.</h2></div><Link to="/products?featured=1" className="text-link">Shop the edit <ArrowUpRight size={17} /></Link></Reveal>
+      <div className="filter-tabs" aria-label="Filter featured products"><button aria-pressed={activeCategory === 'all'} className={activeCategory === 'all' ? 'active' : ''} onClick={() => setActiveCategory('all')}>All favourites</button>{featuredCategories.map((category) => <button key={category.id} aria-pressed={activeCategory === String(category.id)} className={activeCategory === String(category.id) ? 'active' : ''} onClick={() => setActiveCategory(String(category.id))}>{category.name}</button>)}</div>
+      {error ? <div className="surface-panel p-10 text-center" role="status"><h3 className="font-display text-2xl">Our collection needs another moment.</h3><p className="my-3 text-sm text-slate-500">We couldn’t load the latest finds. Please try again.</p><button className="btn-primary mt-2" onClick={() => { setLoading(true); setError(false); setRetry((value) => value + 1) }}>Try again</button></div> : loading ? <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">{Array.from({ length: 4 }, (_, index) => <div key={index} className="skeleton h-96 rounded-2xl" aria-label="Loading product" />)}</div> : shownProducts.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">{shownProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div> : <p className="py-12 text-center text-slate-500">New favourites are on their way. <Link to="/products" className="underline">Explore the full collection.</Link></p>}
+    </div></section>
+
+    <section className="section-space mx-auto max-w-7xl px-5 sm:px-6 lg:px-8"><Reveal className="story-panel"><div className="story-image"><img src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=1000&q=85" alt="A quiet corner filled with books, plants, and everyday objects" loading="lazy" /><span>A more thoughtful everyday.</span></div><div className="story-copy"><p className="section-kicker">A note from Nivora</p><h2>Less ordinary.<br /><em>More meaningful.</em></h2><p>We believe the best things are the ones you reach for again and again. Useful, beautiful pieces that quietly become part of your everyday.</p><p>That’s the idea behind our little market. A considered collection. A personal touch. A little more joy in the ordinary.</p><Link to="/about" className="text-link mt-7">Get to know us <ArrowUpRight size={17} /></Link></div></Reveal></section>
+    <section className="mx-auto max-w-7xl px-5 pb-16 sm:px-6 lg:px-8"><Reveal className="help-banner"><div><p className="section-kicker">Here for the little questions, too</p><h2 className="mt-3 font-display text-3xl sm:text-4xl">Looking for something in particular?</h2><p className="mt-3 text-sm text-brand-100">A gift, a home refresh, or a larger order. Let’s find the right fit.</p></div><Link to="/contact" className="btn-gold shrink-0 gap-3 px-6 py-3.5">Let’s talk <ArrowUpRight size={18} /></Link></Reveal></section>
+  </div>
 }

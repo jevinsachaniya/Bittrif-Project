@@ -1,30 +1,40 @@
-import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom'
 import { CartProvider } from './hooks/useCart'
 import { AuthProvider } from './hooks/useAuth'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
-import Products from './pages/Products'
-import ProductDetail from './pages/ProductDetail'
-import Cart from './pages/Cart'
-import Checkout from './pages/Checkout'
-import OrderSuccess from './pages/OrderSuccess'
-import About from './pages/About'
-import Contact from './pages/Contact'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import MyOrders from './pages/MyOrders'
-import AdminLayout from './pages/admin/AdminLayout'
-import AdminDashboard from './pages/admin/AdminDashboard'
-import AdminOrders from './pages/admin/AdminOrders'
-import AdminProducts from './pages/admin/AdminProducts'
-import AdminProductForm from './pages/admin/AdminProductForm'
+import { MotionConfig } from 'framer-motion'
+import SiteExperience from './components/SiteExperience'
+
+const Products = lazy(() => import('./pages/Products'))
+const ProductDetail = lazy(() => import('./pages/ProductDetail'))
+const Cart = lazy(() => import('./pages/Cart'))
+const Checkout = lazy(() => import('./pages/Checkout'))
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess'))
+const About = lazy(() => import('./pages/About'))
+const Contact = lazy(() => import('./pages/Contact'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const MyOrders = lazy(() => import('./pages/MyOrders'))
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'))
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'))
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'))
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'))
+const AdminProductVisitors = lazy(() => import('./pages/admin/AdminProductVisitors'))
+const AdminProductForm = lazy(() => import('./pages/admin/AdminProductForm'))
+
+function PageLoading() {
+  return <div role="status" className="grid min-h-[60vh] place-items-center"><div className="text-center"><div className="mx-auto h-9 w-9 animate-spin rounded-full border-2 border-brand-200 border-t-brand-700" /><p className="mt-4 text-sm text-brand-700">A little something good is loading…</p></div></div>
+}
 
 function StoreLayout({ children }) {
+  const { pathname } = useLocation()
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar/>
-      <main className="flex-1">{children}</main>
+      <main key={pathname} id="main-content" className="route-content flex-1"><Suspense fallback={<PageLoading />}>{children}</Suspense></main>
       <Footer/>
     </div>
   )
@@ -32,10 +42,11 @@ function StoreLayout({ children }) {
 
 export default function App() {
   return (
-    <AuthProvider>
+    <MotionConfig reducedMotion="user"><AuthProvider>
       <CartProvider>
         <BrowserRouter>
-          <Routes>
+          <SiteExperience />
+          <Suspense fallback={<PageLoading />}><Routes>
             {/* Store */}
             <Route path="/"               element={<StoreLayout><Home/></StoreLayout>}/>
             <Route path="/products"       element={<StoreLayout><Products/></StoreLayout>}/>
@@ -56,12 +67,13 @@ export default function App() {
               <Route index           element={<AdminDashboard/>}/>
               <Route path="orders"   element={<AdminOrders/>}/>
               <Route path="products" element={<AdminProducts/>}/>
+              <Route path="product-visitors" element={<AdminProductVisitors/>}/>
               <Route path="products/new" element={<AdminProductForm/>}/>
               <Route path="products/:productId/edit" element={<AdminProductForm/>}/>
             </Route>
-          </Routes>
+          </Routes></Suspense>
         </BrowserRouter>
       </CartProvider>
-    </AuthProvider>
+    </AuthProvider></MotionConfig>
   )
 }

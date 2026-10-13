@@ -1,4 +1,5 @@
 from typing import List, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -62,3 +63,16 @@ class ImageUpload(BaseModel):
 
 class StatusUpdate(BaseModel):
     status: str = Field(min_length=1, max_length=30)
+
+
+class ProductVisitCreate(BaseModel):
+    product_id: int = Field(gt=0)
+    visit_key: UUID
+    visitor_id: UUID
+
+
+class VisitorContact(BaseModel):
+    visitor_id: UUID
+    name: str = Field(min_length=2, max_length=120)
+    email: Optional[str] = Field(default=None, max_length=254)
+    phone: Optional[str] = Field(default=None, max_length=30)

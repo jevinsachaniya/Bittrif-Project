@@ -1,48 +1,64 @@
-import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { ArrowUpRight, Menu, Package, Phone, ShoppingBag, User, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowUpRight, LogOut, Menu, Package, Search, ShoppingBag, User, X } from 'lucide-react'
 import Logo from './Logo'
 import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 
-const links = [
-  { to: '/', label: 'Home' },
-  { to: '/products', label: 'Shop' },
-  { to: '/about', label: 'Our story' },
-  { to: '/contact', label: 'Contact' },
-]
+const links = [{ to: '/', label: 'Home' }, { to: '/products', label: 'The collection' }, { to: '/about', label: 'Our story' }, { to: '/contact', label: 'Get in touch' }]
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const { pathname } = useLocation()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const { totalItems } = useCart()
+  const menuButton = useRef(null)
   const closeMenu = () => setMenuOpen(false)
+  const handleLogout = () => {
+    logout()
+    closeMenu()
+    navigate('/', { replace: true })
+  }
 
-  return (
-    <header className="sticky top-0 z-50 border-b border-brand-100 bg-white/95 backdrop-blur-xl">
-      <div className="bg-brand-950 text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.18em] sm:px-6 lg:px-8">
-          <span>Thoughtful finds for everyday living</span>
-          <a href="tel:+917228041690" className="hidden items-center gap-2 text-brand-100 hover:text-white sm:inline-flex"><Phone size={12} />+91 72280 41690</a>
-        </div>
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') { setMenuOpen(false); menuButton.current?.focus() }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [menuOpen])
+
+  return <header className={'site-header sticky top-0 z-50 border-b border-brand-100 bg-[#faf9f6]/95 backdrop-blur-xl ' + (scrolled ? 'is-scrolled' : '')}>
+    <a href="#main-content" className="skip-link">Skip to content</a>
+    <div className="bg-brand-950 text-white"><div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-1.5 text-[10px] tracking-[0.08em]"><span>A little more joy in the everyday.</span><Link to="/products" onClick={closeMenu} className="inline-flex items-center gap-1 text-brand-200">Discover the edit <ArrowUpRight size={12} /></Link></div></div>
+    <div className="mx-auto flex h-[64px] max-w-7xl items-center justify-between gap-3 px-5 sm:px-6 lg:px-8">
+      <Link to="/" onClick={closeMenu} className="shrink-0" aria-label="Nivora home"><Logo /></Link>
+      <nav className="hidden items-center gap-2 lg:flex" aria-label="Main navigation">{links.map((link) => {
+        const active = link.to === '/' ? pathname === '/' : pathname.startsWith(link.to)
+        return <Link key={link.to} to={link.to} aria-current={active ? 'page' : undefined} className={'nav-link ' + (active ? 'active' : '')}>{link.label}{active && <motion.span layoutId="navigation-underline" className="nav-indicator" transition={{ type: 'spring', stiffness: 360, damping: 32 }} />}</Link>
+      })}</nav>
+      <div className="flex items-center gap-1 sm:gap-2">
+        <Link to="/products" onClick={closeMenu} className="nav-icon hidden sm:grid" aria-label="Search the collection"><Search size={19} strokeWidth={1.5} /></Link>
+        <Link to={user ? '/my-orders' : '/login'} onClick={closeMenu} className="nav-icon" aria-label={user ? 'My orders' : 'Login'}>{user ? <Package size={19} strokeWidth={1.5} /> : <User size={19} strokeWidth={1.5} />}</Link>
+        {user && <button type="button" onClick={handleLogout} className="hidden min-h-11 items-center gap-2 rounded-full border border-brand-200 px-4 text-xs font-semibold text-brand-800 hover:bg-brand-100 lg:inline-flex"><LogOut size={16} strokeWidth={1.5} />Log out</button>}
+        <Link to="/cart" onClick={closeMenu} className="nav-icon relative" aria-label={'Shopping bag, ' + totalItems + ' items'}><ShoppingBag size={19} strokeWidth={1.5} />{totalItems > 0 && <motion.span key={totalItems} initial={{ scale: .65 }} animate={{ scale: 1 }} className="absolute -right-0.5 top-0 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand-700 px-1 text-[9px] font-bold text-white">{totalItems}</motion.span>}</Link>
+        <button ref={menuButton} onClick={() => setMenuOpen((value) => !value)} className="nav-icon lg:hidden" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} aria-controls="mobile-navigation">{menuOpen ? <X size={21} /> : <Menu size={21} />}</button>
       </div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-[74px] items-center justify-between gap-4">
-          <Link to="/" onClick={closeMenu} className="shrink-0"><Logo /></Link>
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
-            {links.map((link) => <Link key={link.to} to={link.to} className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${pathname === link.to ? 'bg-brand-950 text-white' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-900'}`}>{link.label}</Link>)}
-          </nav>
-          <div className="flex items-center gap-2">
-            <a href="tel:+917228041690" className="hidden h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-brand-900 hover:bg-brand-50 xl:inline-flex"><Phone size={16} />Call us</a>
-            <Link to="/cart" className="relative grid h-11 w-11 place-items-center rounded-full bg-brand-50 text-brand-900 hover:bg-brand-100" aria-label="Cart"><ShoppingBag size={19} />{totalItems > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">{totalItems}</span>}</Link>
-            <Link to={user ? '/my-orders' : '/login'} className="hidden h-11 items-center gap-2 rounded-full border border-brand-100 px-4 text-sm font-semibold text-brand-900 hover:bg-brand-50 sm:inline-flex">{user ? <><Package size={16} />My orders</> : <><User size={16} />Login</>}</Link>
-            <Link to="/contact" className="btn-primary hidden gap-2 md:inline-flex">Say hello <ArrowUpRight size={16} /></Link>
-            <button onClick={() => setMenuOpen((value) => !value)} className="grid h-11 w-11 place-items-center rounded-full border border-brand-100 text-brand-900 lg:hidden" aria-label="Toggle navigation" aria-expanded={menuOpen}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
-          </div>
-        </div>
-      </div>
-      {menuOpen && <div className="border-t border-brand-100 bg-white p-4 lg:hidden"><nav className="mx-auto grid max-w-7xl gap-2" aria-label="Mobile navigation">{links.map((link) => <Link key={link.to} to={link.to} onClick={closeMenu} className={`rounded-xl px-4 py-3 text-sm font-semibold ${pathname === link.to ? 'bg-brand-950 text-white' : 'bg-brand-50 text-slate-700'}`}>{link.label}</Link>)}<Link to="/cart" onClick={closeMenu} className="rounded-xl border border-brand-100 px-4 py-3 text-sm font-semibold text-brand-900">Cart ({totalItems})</Link><Link to={user ? '/my-orders' : '/login'} onClick={closeMenu} className="rounded-xl border border-brand-100 px-4 py-3 text-sm font-semibold text-brand-900">{user ? 'My orders' : 'Login to shop'}</Link><Link to="/contact" onClick={closeMenu} className="rounded-xl bg-brand-950 px-4 py-3 text-center text-sm font-semibold text-white">Get in touch</Link></nav></div>}
-    </header>
-  )
+    </div>
+    <AnimatePresence>{menuOpen && <motion.div id="mobile-navigation" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: .25 }} className="overflow-hidden border-t border-brand-100 bg-[#faf9f6] lg:hidden"><nav className="grid gap-2 p-5" aria-label="Mobile navigation">{links.map((link) => <Link key={link.to} to={link.to} onClick={closeMenu} aria-current={pathname === link.to ? 'page' : undefined} className={'flex items-center justify-between rounded-xl px-4 py-3 text-sm ' + (pathname === link.to ? 'bg-brand-950 text-white' : 'bg-brand-50 text-brand-900')}>{link.label}<ArrowUpRight size={16} /></Link>)}<Link to="/products" onClick={closeMenu} className="flex items-center gap-2 px-4 py-3 text-sm text-brand-800"><Search size={16} />Search products</Link>
+      <Link to={user ? '/my-orders' : '/login'} onClick={closeMenu} className="flex items-center gap-2 px-4 py-3 text-sm text-brand-800">{user ? <Package size={16} /> : <User size={16} />}{user ? 'My orders' : 'Login'}</Link>
+      {user && <button type="button" onClick={handleLogout} className="flex w-full items-center gap-2 rounded-xl border border-brand-200 px-4 py-3 text-left text-sm font-semibold text-brand-800 hover:bg-brand-100"><LogOut size={16} />Log out</button>}
+    </nav></motion.div>}</AnimatePresence>
+  </header>
 }
